@@ -293,9 +293,9 @@ def run_backtest(
     interval: str = "biweekly",
     position_size: float = 10000,
     hold_days: int = 5,
-    llm_provider: str = "openai",
-    deep_model: str = "gpt-4o-mini",
-    quick_model: str = "gpt-4o-mini",
+    llm_provider: str = "anthropic",
+    deep_model: str = "claude-sonnet-4-5",
+    quick_model: str = "claude-haiku-4-5",
     debate_rounds: int = 1,
     analysts: Optional[list[str]] = None,
     learn: bool = True,
@@ -555,12 +555,12 @@ Examples:
                         help="Dollar amount per trade (default: $10,000)")
     parser.add_argument("--hold-days", type=int, default=5,
                         help="Trading days to hold before measuring outcome (default: 5)")
-    parser.add_argument("--llm-provider", type=str, default="openai",
-                        help="LLM provider (openai, anthropic, google, etc.)")
-    parser.add_argument("--deep-model", type=str, default="gpt-4o-mini",
-                        help="Deep thinking model")
-    parser.add_argument("--quick-model", type=str, default="gpt-4o-mini",
-                        help="Quick thinking model")
+    parser.add_argument("--llm-provider", type=str, default="anthropic",
+                        help="LLM provider (anthropic, openai, google, etc.)")
+    parser.add_argument("--deep-model", type=str, default="claude-sonnet-4-5",
+                        help="Deep thinking model (default: claude-sonnet-4-5)")
+    parser.add_argument("--quick-model", type=str, default="claude-haiku-4-5",
+                        help="Quick thinking model (default: claude-haiku-4-5)")
     parser.add_argument("--debate-rounds", type=int, default=1,
                         help="Number of bull/bear debate rounds (1, 3, or 5)")
     parser.add_argument("--analysts", type=str, nargs="+",
