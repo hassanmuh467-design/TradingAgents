@@ -1,4 +1,8 @@
-from typing import Annotated
+from typing import Any
+
+from tradingagents.logging_config import get_logger
+
+logger = get_logger("dataflows.interface")
 
 # Import from vendor-specific modules
 from .y_finance import (
@@ -131,11 +135,12 @@ def get_vendor(category: str, method: str = None) -> str:
     # Fall back to category-level configuration
     return config.get("data_vendors", {}).get(category, "default")
 
-def route_to_vendor(method: str, *args, **kwargs):
+def route_to_vendor(method: str, *args: Any, **kwargs: Any) -> Any:
     """Route method calls to appropriate vendor implementation with fallback support."""
     category = get_category_for_method(method)
     vendor_config = get_vendor(category, method)
     primary_vendors = [v.strip() for v in vendor_config.split(',')]
+    logger.info("Routing method=%s to vendor(s)=%s (category=%s)", method, primary_vendors, category)
 
     if method not in VENDOR_METHODS:
         raise ValueError(f"Method '{method}' not supported")
@@ -155,8 +160,11 @@ def route_to_vendor(method: str, *args, **kwargs):
         impl_func = vendor_impl[0] if isinstance(vendor_impl, list) else vendor_impl
 
         try:
-            return impl_func(*args, **kwargs)
+            result = impl_func(*args, **kwargs)
+            logger.info("Vendor %s succeeded for method=%s", vendor, method)
+            return result
         except AlphaVantageRateLimitError:
+            logger.warning("AlphaVantage rate limit hit for method=%s, falling back to next vendor", method)
             continue  # Only rate limits trigger fallback
 
     raise RuntimeError(f"No available vendor for '{method}'")

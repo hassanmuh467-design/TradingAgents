@@ -8,6 +8,10 @@ from rank_bm25 import BM25Okapi
 from typing import List, Tuple
 import re
 
+from tradingagents.logging_config import get_logger
+
+logger = get_logger("memory")
+
 
 class FinancialSituationMemory:
     """Memory system for storing and retrieving financial situations using BM25."""
@@ -51,6 +55,7 @@ class FinancialSituationMemory:
             self.documents.append(situation)
             self.recommendations.append(recommendation)
 
+        logger.info("[%s] Added %d situation(s) (total=%d)", self.name, len(situations_and_advice), len(self.documents))
         # Rebuild BM25 index with new documents
         self._rebuild_index()
 
@@ -65,6 +70,7 @@ class FinancialSituationMemory:
             List of dicts with matched_situation, recommendation, and similarity_score
         """
         if not self.documents or self.bm25 is None:
+            logger.debug("[%s] No documents in memory, returning empty results", self.name)
             return []
 
         # Tokenize query
@@ -89,10 +95,12 @@ class FinancialSituationMemory:
                 "similarity_score": normalized_score,
             })
 
+        logger.info("[%s] Retrieved %d match(es) from %d stored documents", self.name, len(results), len(self.documents))
         return results
 
     def clear(self):
         """Clear all stored memories."""
+        logger.info("[%s] Clearing all memories (%d documents)", self.name, len(self.documents))
         self.documents = []
         self.recommendations = []
         self.bm25 = None

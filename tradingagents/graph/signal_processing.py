@@ -1,12 +1,16 @@
 # TradingAgents/graph/signal_processing.py
 
-from langchain_openai import ChatOpenAI
+from typing import Any
+
+from tradingagents.logging_config import get_logger
+
+logger = get_logger("signal_processing")
 
 
 class SignalProcessor:
     """Processes trading signals to extract actionable decisions."""
 
-    def __init__(self, quick_thinking_llm: ChatOpenAI):
+    def __init__(self, quick_thinking_llm: Any):
         """Initialize with an LLM for processing."""
         self.quick_thinking_llm = quick_thinking_llm
 
@@ -20,6 +24,7 @@ class SignalProcessor:
         Returns:
             Extracted decision (BUY, SELL, or HOLD)
         """
+        logger.info("Signal processing started")
         messages = [
             (
                 "system",
@@ -28,4 +33,6 @@ class SignalProcessor:
             ("human", full_signal),
         ]
 
-        return self.quick_thinking_llm.invoke(messages).content
+        result = self.quick_thinking_llm.invoke(messages).content
+        logger.info("Signal processing result: %s", result)
+        return result

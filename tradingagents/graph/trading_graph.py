@@ -9,6 +9,9 @@ from typing import Dict, Any, Tuple, List, Optional
 from langgraph.prebuilt import ToolNode
 
 from tradingagents.llm_clients import create_llm_client
+from tradingagents.logging_config import get_logger
+
+logger = get_logger("trading_graph")
 
 from tradingagents.agents import *
 from tradingagents.default_config import DEFAULT_CONFIG
@@ -62,6 +65,13 @@ class TradingAgentsGraph:
         self.config = config or DEFAULT_CONFIG
         self.callbacks = callbacks or []
 
+        logger.info(
+            "Initializing TradingAgentsGraph (provider=%s, deep_model=%s, quick_model=%s)",
+            self.config.get("llm_provider"),
+            self.config.get("deep_think_llm"),
+            self.config.get("quick_think_llm"),
+        )
+
         # Update the interface's config
         set_config(self.config)
 
@@ -78,12 +88,14 @@ class TradingAgentsGraph:
         if self.callbacks:
             llm_kwargs["callbacks"] = self.callbacks
 
+        logger.debug("Creating deep thinking LLM client (model=%s)", self.config["deep_think_llm"])
         deep_client = create_llm_client(
             provider=self.config["llm_provider"],
             model=self.config["deep_think_llm"],
             base_url=self.config.get("backend_url"),
             **llm_kwargs,
         )
+        logger.debug("Creating quick thinking LLM client (model=%s)", self.config["quick_think_llm"])
         quick_client = create_llm_client(
             provider=self.config["llm_provider"],
             model=self.config["quick_think_llm"],
@@ -132,6 +144,7 @@ class TradingAgentsGraph:
 
         # Set up the graph
         self.graph = self.graph_setup.setup_graph(selected_analysts)
+        logger.info("Graph compiled successfully with analysts: %s", selected_analysts)
 
     def _get_provider_kwargs(self) -> Dict[str, Any]:
         """Get provider-specific kwargs for LLM client creation."""
@@ -188,6 +201,7 @@ class TradingAgentsGraph:
 
     def propagate(self, company_name, trade_date):
         """Run the trading agents graph for a company on a specific date."""
+        logger.info("propagate() started for ticker=%s, date=%s", company_name, trade_date)
 
         self.ticker = company_name
 
@@ -219,6 +233,7 @@ class TradingAgentsGraph:
         self._log_state(trade_date, final_state)
 
         # Return decision and processed signal
+        logger.info("propagate() completed for ticker=%s, date=%s", company_name, trade_date)
         return final_state, self.process_signal(final_state["final_trade_decision"])
 
     def _log_state(self, trade_date, final_state):
@@ -266,6 +281,7 @@ class TradingAgentsGraph:
 
     def reflect_and_remember(self, returns_losses):
         """Reflect on decisions and update memory based on returns."""
+        logger.info("reflect_and_remember() called with returns_losses=%s", returns_losses)
         self.reflector.reflect_bull_researcher(
             self.curr_state, returns_losses, self.bull_memory
         )

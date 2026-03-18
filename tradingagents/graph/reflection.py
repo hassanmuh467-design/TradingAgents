@@ -1,13 +1,16 @@
 # TradingAgents/graph/reflection.py
 
-from typing import Dict, Any
-from langchain_openai import ChatOpenAI
+from typing import Any, Dict
+
+from tradingagents.logging_config import get_logger
+
+logger = get_logger("reflection")
 
 
 class Reflector:
     """Handles reflection on decisions and updating memory."""
 
-    def __init__(self, quick_thinking_llm: ChatOpenAI):
+    def __init__(self, quick_thinking_llm: Any):
         """Initialize the reflector with an LLM."""
         self.quick_thinking_llm = quick_thinking_llm
         self.reflection_system_prompt = self._get_reflection_prompt()
@@ -59,6 +62,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         self, component_type: str, report: str, situation: str, returns_losses
     ) -> str:
         """Generate reflection for a component."""
+        logger.info("Starting reflection for component: %s", component_type)
         messages = [
             ("system", self.reflection_system_prompt),
             (
@@ -78,6 +82,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         result = self._reflect_on_component(
             "BULL", bull_debate_history, situation, returns_losses
         )
+        logger.debug("Updating bull researcher memory")
         bull_memory.add_situations([(situation, result)])
 
     def reflect_bear_researcher(self, current_state, returns_losses, bear_memory):
@@ -88,6 +93,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         result = self._reflect_on_component(
             "BEAR", bear_debate_history, situation, returns_losses
         )
+        logger.debug("Updating bear researcher memory")
         bear_memory.add_situations([(situation, result)])
 
     def reflect_trader(self, current_state, returns_losses, trader_memory):
@@ -98,6 +104,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         result = self._reflect_on_component(
             "TRADER", trader_decision, situation, returns_losses
         )
+        logger.debug("Updating trader memory")
         trader_memory.add_situations([(situation, result)])
 
     def reflect_invest_judge(self, current_state, returns_losses, invest_judge_memory):
@@ -108,6 +115,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         result = self._reflect_on_component(
             "INVEST JUDGE", judge_decision, situation, returns_losses
         )
+        logger.debug("Updating invest judge memory")
         invest_judge_memory.add_situations([(situation, result)])
 
     def reflect_risk_manager(self, current_state, returns_losses, risk_manager_memory):
@@ -118,4 +126,5 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         result = self._reflect_on_component(
             "RISK JUDGE", judge_decision, situation, returns_losses
         )
+        logger.debug("Updating risk manager memory")
         risk_manager_memory.add_situations([(situation, result)])

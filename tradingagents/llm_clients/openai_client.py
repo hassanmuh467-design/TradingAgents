@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, Optional
 
@@ -5,6 +6,8 @@ from langchain_openai import ChatOpenAI
 
 from .base_client import BaseLLMClient
 from .validators import validate_model
+
+logger = logging.getLogger(__name__)
 
 
 class UnifiedChatOpenAI(ChatOpenAI):
@@ -41,6 +44,9 @@ class OpenAIClient(BaseLLMClient):
 
     def get_llm(self) -> Any:
         """Return configured ChatOpenAI instance."""
+        if not self.validate_model():
+            logger.warning(f"Model '{self.model}' may not be supported by {self.provider}. Proceeding anyway.")
+
         llm_kwargs = {"model": self.model}
 
         if self.provider == "xai":

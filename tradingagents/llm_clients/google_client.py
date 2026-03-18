@@ -1,9 +1,12 @@
+import logging
 from typing import Any, Optional
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from .base_client import BaseLLMClient
 from .validators import validate_model
+
+logger = logging.getLogger(__name__)
 
 
 class NormalizedChatGoogleGenerativeAI(ChatGoogleGenerativeAI):
@@ -32,15 +35,24 @@ class GoogleClient(BaseLLMClient):
     """Client for Google Gemini models."""
 
     def __init__(self, model: str, base_url: Optional[str] = None, **kwargs):
+        if base_url is not None:
+            logger.warning("GoogleClient does not support 'base_url'. The parameter will be ignored.")
         super().__init__(model, base_url, **kwargs)
 
     def get_llm(self) -> Any:
         """Return configured ChatGoogleGenerativeAI instance."""
+        if not self.validate_model():
+            logger.warning(f"Model '{self.model}' may not be supported by Google. Proceeding anyway.")
+
         llm_kwargs = {"model": self.model}
 
         for key in ("timeout", "max_retries", "google_api_key", "callbacks", "http_client", "http_async_client"):
             if key in self.kwargs:
                 llm_kwargs[key] = self.kwargs[key]
+
+        # Map unified api_key to google_api_key if google_api_key not already set
+        if "api_key" in self.kwargs and "google_api_key" not in llm_kwargs:
+            llm_kwargs["google_api_key"] = self.kwargs["api_key"]
 
         # Map thinking_level to appropriate API param based on model
         # Gemini 3 Pro: low, high
